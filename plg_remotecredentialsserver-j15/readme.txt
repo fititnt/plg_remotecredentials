@@ -1,0 +1,1 @@
+@todo: make one Joomla 1.5 version of plg_remotecredentialsserver

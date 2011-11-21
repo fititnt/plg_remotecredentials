@@ -27,15 +27,61 @@ class plgAuthenticationRemotecredentials extends JPlugin {
             return false;
         }
 
-        //...
 
-        
-        // Success!
-        $response->status = JAUTHENTICATE_STATUS_SUCCESS;
-        $response->error_message = '';
+        $tokenVar = $this->params->get('tokenvar', 'rctoken');
+        $token = $this->params->get('token', NULL);
+        $url = $this->params->get('url', NULL);
 
-        $response->status = JAUTHENTICATE_STATUS_SUCCESS;
-        $response->error_message = '';
+        if (!$token || !$url) {
+            return true; //Token or URL is not defined, exit plugin
+        }
+        $urlQuery = http_build_query(array(
+            $tokenVar => $token,
+            'username' => $credentials['username'],
+            'password' => $credentials['password']
+                ));
+
+        if (strpos($url, '?') === FALSE) { //if does not have ? on url, add it
+            $finalUrl = $url . '?' . $urlQuery;
+        } else {
+            $finalUrl = $url . $urlQuery;
+        }
+
+        $contents = $this->_getUrlContents($finalUrl);
+
+        $result = json_decode($contents);
+
+        if (!isset($result->name) || !isset($result->username) || !isset($result->email)) {
+            $response->status = JAUTHENTICATE_STATUS_FAILURE;
+            return;
+        } else {
+            $response->name = $result->name;
+            $response->username = $result->username;
+            $response->email = $result->email;
+            $response->password = $password;
+            $response->status = JAUTHENTICATE_STATUS_SUCCESS;
+            $response->error_message = '';
+        }
+    }
+
+    /*
+     * Return contents of url
+     * @author      Emerson Rocha Luiz
+     * @var         string      $url
+     * @var         string      $certificate path to certificate if is https URL
+     * @return      string
+     */
+
+    protected function _getUrlContents($url, $certificate = FALSE) {
+        //$page = file_get_contents($url);            
+        $ch = curl_init(); //Inicializar a sessao           
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); //Retorne os dados em vez de imprimir em tela
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $certificate); //Check certificate if is SSL, default FALSE
+        curl_setopt($ch, CURLOPT_URL, $url); //Setar URL
+        $content = curl_exec($ch); //Execute
+        curl_close($ch); //Feche          
+
+        return $content;
     }
 
 }

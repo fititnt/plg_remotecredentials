@@ -32,15 +32,12 @@ class plgSystemRemotecRedentialsserver extends JPlugin {
         }
 
         $ipsString = $this->params->get('ips', NULL);
-        
-        $ipsString = $this->params->get('ips', NULL);
         if ($ipsString || $ipsString != '*') {
             $ips = explode(',', $ipsString);
             if (!in_array($_SERVER['REMOTE_ADDR'], $ips)) {
                 return true; //If is defined remote IPs, but remote ip is not listed, exit plugin
             }
         }
-        //var_dump($tokenVar);die('breakpoint time :D!');
         $id = JRequest::getCmd('id', NULL);
         $username = JRequest::getCmd('username', NULL);
         $email = JRequest::getCmd('email', NULL);
@@ -62,20 +59,18 @@ class plgSystemRemotecRedentialsserver extends JPlugin {
 
         //What will be used to login? Lets define here
         $db = JFactory::getDbo();
-        $query = $db->getQuery(true);
-        $query->select('id, password');
-        $query->from('#__users');
+        //$query = $db->getQuery(true);
+        $query = 'SELECT id, password FROM #__users ';
         if ($id != "") {
-            $query->where('id = ' . (int) $id); //Cast or not cast, thats the question
+            $query .= 'WHERE id = ' . (int) $id; //Cast or not cast, thats the question
         } else if ($username  != "") {
-            $query->where('username = ' . $db->quote($username) );
+            $query .= 'WHERE username = ' . $db->quote($username) ;
         } else {
-            $query->where('email = ' . $db->quote($email) );
+            $query .= 'WHERE email = ' . $db->quote($email);
         }
         
         $db->setQuery($query);
         $result = $db->loadObject();
-        //die($query);
         if ($result) {
             $parts = explode(':', $result->password);
             $crypt = $parts[0];
